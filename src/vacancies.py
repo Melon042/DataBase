@@ -1,4 +1,15 @@
-class DBManager:   # использовать библиотеку psycopg2 для работы с БД.
+import psycopg2
+
+
+conn = psycopg2.connect(
+    host = 'localhost',
+    database = 'HHru',
+    user = 'postgres',
+    password = '1331')
+
+cur = conn.cursor()
+
+class DBManager:
     """Класс для работы с БД PostgreSQL"""
 
     def get_companies_and_vacancies_count(self):
