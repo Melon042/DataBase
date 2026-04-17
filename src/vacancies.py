@@ -1,14 +1,6 @@
 import psycopg2
 
 
-conn = psycopg2.connect(
-    host = 'localhost',
-    database = 'HHru',
-    user = 'postgres',
-    password = '1331')
-
-cur = conn.cursor()
-
 class DBManager:
     """Класс для работы с БД PostgreSQL"""
 
