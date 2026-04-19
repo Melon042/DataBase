@@ -1,7 +1,8 @@
 import os
+
 import psycopg2
 from dotenv import load_dotenv
-
+from psycopg2.errors import DuplicateDatabase
 
 load_dotenv()
 
@@ -9,7 +10,7 @@ DB_PARAMS = {
     "host": os.getenv("DB_HOST"),
     "dbname": os.getenv("DB_NAME"),
     "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD")
+    "password": os.getenv("DB_PASSWORD"),
 }
 
 
@@ -20,18 +21,18 @@ def create_db() -> None:
         host=DB_PARAMS["host"],
         dbname="postgres",
         user=DB_PARAMS["user"],
-        password=DB_PARAMS["password"]
+        password=DB_PARAMS["password"],
     )
 
     conn.autocommit = True
 
-    with conn.cursor() as cur:
-        try:
+    try:
+        with conn.cursor() as cur:
             cur.execute(f"CREATE DATABASE {DB_PARAMS['dbname']}")
-        except Exception:
-            pass
-
-    conn.close()
+    except DuplicateDatabase:
+        pass
+    finally:
+        conn.close()
 
 
 def create_tables() -> None:

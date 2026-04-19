@@ -1,11 +1,23 @@
-import requests
 import time
+
+import requests
+
 from src.files import save_to_json
 
-
 BASE_URL = "https://api.hh.ru"
-HEADERS = {"User-Agent": "StudyProject/1.0 (dimonka1000@gmail.com)"}
-EMPLOYERS_IDS = ["2180", "87021", "1740", "78638", "80", "2748", "3776", "4219", "4934", "1122462"]
+HEADERS = {"User-Agent": "StudyProject/1.0 (dev@example.test)"}
+EMPLOYERS_IDS = [
+    "2180",
+    "87021",
+    "1740",
+    "78638",
+    "80",
+    "2748",
+    "3776",
+    "4219",
+    "4934",
+    "1122462",
+]
 
 
 def get_employers_to_json() -> None:
@@ -16,23 +28,31 @@ def get_employers_to_json() -> None:
     for employer_id in EMPLOYERS_IDS:
         response = requests.get(f"{BASE_URL}/employers/{employer_id}", headers=HEADERS)
         if response.status_code != 200:
-            print(f"Ошибка {response.status_code} при запросе данных о компании {employer_id}.")
+            print(
+                f"Ошибка {response.status_code} при запросе данных о компании {employer_id}."
+            )
             continue
 
         data = response.json()
-        employers_data.append({
-            "employer_id": int(data["id"]),
-            "name": data["name"],
-            "description": data.get("description", ""),
-            "site_url": data.get("site_url", ""),
-            "hh_url": data.get("alternate_url", ""),
-            "open_vacancies": int(data["open_vacancies"]),
-            "accredited_it": bool(data.get("accredited_it_employer", False))
-        })
+        employers_data.append(
+            {
+                "employer_id": int(data["id"]),
+                "name": data["name"],
+                "description": data.get("description", ""),
+                "site_url": data.get("site_url", ""),
+                "hh_url": data.get("alternate_url", ""),
+                "open_vacancies": int(data["open_vacancies"]),
+                "accredited_it": bool(data.get("accredited_it_employer", False)),
+            }
+        )
 
         time.sleep(0.2)
 
-    save_to_json("employers", employers_data)
+    if employers_data:
+        save_to_json("employers", employers_data)
+    else:
+        print("\nНе удалось получить данные по работодателям от hh.ru")
+        raise ValueError("Не удалось получить данные по работодателям от hh.ru")
 
 
 def get_vacancies_to_json() -> None:
@@ -45,9 +65,13 @@ def get_vacancies_to_json() -> None:
         page = 0
         while True:
             params = {"employer_id": employer_id, "per_page": 100, "page": page}
-            response = requests.get(f"{BASE_URL}/vacancies", headers=HEADERS, params=params)
+            response = requests.get(
+                f"{BASE_URL}/vacancies", headers=HEADERS, params=params
+            )
             if response.status_code != 200:
-                print(f"Ошибка {response.status_code} при запросе вакансий компании {employer_id}.")
+                print(
+                    f"Ошибка {response.status_code} при запросе вакансий компании {employer_id}."
+                )
                 break
 
             data = response.json()
@@ -57,22 +81,24 @@ def get_vacancies_to_json() -> None:
 
             for v in items:
                 salary = v.get("salary") or {}
-                vacancies.append({
-                    "vacancy_id": int(v["id"]),
-                    "employer_id": int(employer_id),
-                    "title": v["name"],
-                    "area": v["area"]["name"],
-                    "salary_from": salary.get("from"),
-                    "salary_to": salary.get("to"),
-                    "salary_currency": salary.get("currency"),
-                    "experience": v.get("experience", {}).get("name", ""),
-                    "employment": v.get("employment", {}).get("name", ""),
-                    "schedule": v.get("schedule", {}).get("name", ""),
-                    "snippet_req": v.get("snippet", {}).get("requirement", ""),
-                    "snippet_resp": v.get("snippet", {}).get("responsibility", ""),
-                    "published_at": v.get("published_at", ""),
-                    "url": v.get("alternate_url", "")
-                })
+                vacancies.append(
+                    {
+                        "vacancy_id": int(v["id"]),
+                        "employer_id": int(employer_id),
+                        "title": v["name"],
+                        "area": v["area"]["name"],
+                        "salary_from": salary.get("from"),
+                        "salary_to": salary.get("to"),
+                        "salary_currency": salary.get("currency"),
+                        "experience": v.get("experience", {}).get("name", ""),
+                        "employment": v.get("employment", {}).get("name", ""),
+                        "schedule": v.get("schedule", {}).get("name", ""),
+                        "snippet_req": v.get("snippet", {}).get("requirement", ""),
+                        "snippet_resp": v.get("snippet", {}).get("responsibility", ""),
+                        "published_at": v.get("published_at", ""),
+                        "url": v.get("alternate_url", ""),
+                    }
+                )
 
             if len(items) < 100:
                 break
@@ -81,4 +107,8 @@ def get_vacancies_to_json() -> None:
                 break
             time.sleep(1)
 
-    save_to_json("vacancies", vacancies)
+    if vacancies:
+        save_to_json("vacancies", vacancies)
+    else:
+        print("\nНе удалось получить данные по вакансиям от hh.ru")
+        raise ValueError("Не удалось получить данные по вакансиям от hh.ru")
